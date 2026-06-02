@@ -1,0 +1,3 @@
+import { Grid, Card, CardContent, Typography, Alert } from '@mui/material';
+const cards=['Ventas de hoy','Gastos de hoy','Apartados activos','Nómina pendiente','Cargas recientes','Apartados por vencer'];
+export default function Dashboard(){return <><Typography variant="h5" mb={2}>Dashboard</Typography><Alert severity="info" sx={{mb:2}}>ERP inicial para operar sin inventario obligatorio. Puedes crecer por módulos.</Alert><Grid container spacing={2}>{cards.map(c=><Grid item xs={12} md={4} key={c}><Card><CardContent><Typography color="text.secondary">{c}</Typography><Typography variant="h4">$0.00</Typography></CardContent></Card></Grid>)}</Grid></>}
