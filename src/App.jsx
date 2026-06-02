@@ -14,6 +14,7 @@ import Reportes from './pages/Reportes/Reportes.jsx';
 import Configuracion from './pages/Configuracion/Configuracion.jsx';
 import Login from './pages/Login/Login.jsx';
 import ProtectedRoute from './components/ProtectedRoute.jsx';
+import CargaDetalle from './pages/Cargas/CargaDetalle.jsx';
 
 export default function App() {
   return (
@@ -34,11 +35,13 @@ export default function App() {
                   <Route path="/apartados" element={<Apartados />} />
                   <Route path="/clientes" element={<Clientes />} />
                   <Route path="/cargas" element={<Cargas />} />
+                  <Route path="/cargas/:id" element={<CargaDetalle />} />
                   <Route path="/nominas" element={<Nominas />} />
                   <Route path="/cortes" element={<Cortes />} />
                   <Route path="/inventario" element={<Inventario />} />
                   <Route path="/reportes" element={<Reportes />} />
                   <Route path="/configuracion" element={<Configuracion />} />
+
                 </Routes>
               </MainLayout>
             </UserProvider>
