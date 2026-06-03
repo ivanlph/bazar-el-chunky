@@ -1,5 +1,8 @@
 {
   "projects": {
-    "default": "bazar-el-chunky"
-  }
+    "default": "bazar-el-chunky",
+    "bazar-el-chunky": "bazar-el-chunky"
+  },
+  "targets": {},
+  "etags": {}
 }
