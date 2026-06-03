@@ -36,7 +36,7 @@ export default function Ventas() {
     await agregarVenta({ ...base, tipo:'apartado', descripcion:form.descripcion, categoria:'Apartado', monto:abonado, apartadoId:ap.id, clienteId });
   };
 
-  return <Box><Stack direction="row" justifyContent="space-between" alignItems="center" mb={2}><Box><Typography variant="h5">Ventas del Día</Typography><Typography color="text.secondary">{fecha}</Typography></Box><Button variant="contained" color="success" onClick={() => setDialog('corte')}>
+  return <Box><Stack direction="row" justifyContent="space-between" alignItems="right" mb={2}><Box><Typography variant="h5">Ventas del Día</Typography><Typography color="text.secondary">{fecha}</Typography></Box><Button variant="contained" color="success" onClick={() => setDialog('corte')}>
   Generar Corte
 </Button></Stack>
     <Card sx={{ mb:2 }}><CardContent><Typography color="text.secondary">Total del día</Typography><Typography variant="h4" className="money">{formatMoney(total)}</Typography></CardContent></Card>
