@@ -30,6 +30,7 @@ const initialForm = {
   ayudanteMxn: '',
   otrosMxn: '',
   notas: '',
+  tipoCambio: '17.5',
 };
 
 export default function Cargas() {
@@ -50,6 +51,7 @@ export default function Cargas() {
       aduanaMxn: Number(form.aduanaMxn || 0),
       ayudanteMxn: Number(form.ayudanteMxn || 0),
       otrosMxn: Number(form.otrosMxn || 0),
+      tipoCambio: Number(form.tipoCambio || 17.5),
     });
 
     setForm(initialForm);
@@ -138,7 +140,8 @@ export default function Cargas() {
             <TextField label="Gasolina USA" type="number" value={form.gasolinaUsd} onChange={(e) => setForm({ ...form, gasolinaUsd: e.target.value })} fullWidth />
             <TextField label="Hotel" type="number" value={form.hotelUsd} onChange={(e) => setForm({ ...form, hotelUsd: e.target.value })} fullWidth />
             <TextField label="Comida" type="number" value={form.comidaUsd} onChange={(e) => setForm({ ...form, comidaUsd: e.target.value })} fullWidth />
-
+            <TextField label="Tipo de cambio" type="number" value={form.tipoCambio} onChange={(e) => setForm({ ...form, tipoCambio: e.target.value })} fullWidth/>
+           
             <Typography fontWeight={700}>Gastos México</Typography>
             <TextField label="Gasolina México" type="number" value={form.gasolinaMxn} onChange={(e) => setForm({ ...form, gasolinaMxn: e.target.value })} fullWidth />
             <TextField label="Renta traila" type="number" value={form.rentaTrailaMxn} onChange={(e) => setForm({ ...form, rentaTrailaMxn: e.target.value })} fullWidth />
