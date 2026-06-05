@@ -6,7 +6,6 @@ import {
   Card,
   CardContent,
   Divider,
-  Grid,
   Stack,
   Table,
   TableBody,
@@ -40,6 +39,39 @@ const initialConteo = {
 };
 
 const numberValue = (value) => Number(value || 0);
+
+function AmountRow({ label, value, labelColor = 'text.primary' }) {
+  return (
+    <Box
+      sx={{
+        display: 'grid',
+        gridTemplateColumns: 'minmax(0, 1fr) auto',
+        gap: 1,
+        alignItems: 'center',
+      }}
+    >
+      <Typography color={labelColor} sx={{ minWidth: 0 }}>
+        {label}
+      </Typography>
+      <Typography fontWeight={700} sx={{ whiteSpace: 'nowrap' }}>
+        {value}
+      </Typography>
+    </Box>
+  );
+}
+
+function SummaryCard({ label, value, color = 'text.primary' }) {
+  return (
+    <Card sx={{ height: '100%' }}>
+      <CardContent>
+        <Typography color="text.secondary">{label}</Typography>
+        <Typography variant="h5" color={color}>
+          {value}
+        </Typography>
+      </CardContent>
+    </Card>
+  );
+}
 
 function sumarVentas(ventas) {
   return ventas.reduce(
@@ -178,6 +210,13 @@ function CortesContent() {
     }
   };
 
+  const differenceColor =
+    resumen.diferenciaTotal === 0
+      ? 'text.primary'
+      : resumen.diferenciaTotal > 0
+        ? 'success.main'
+        : 'error.main';
+
   return (
     <Box>
       <Stack
@@ -200,6 +239,7 @@ function CortesContent() {
           value={fecha}
           onChange={(e) => setFecha(e.target.value)}
           InputLabelProps={{ shrink: true }}
+          fullWidth={isMobile}
           sx={{ minWidth: { sm: 180 } }}
         />
       </Stack>
@@ -211,218 +251,177 @@ function CortesContent() {
         </Alert>
       )}
 
-      <Grid container spacing={2} mb={2}>
-        <Grid item xs={12} md={3}>
-          <Card>
-            <CardContent>
-              <Typography color="text.secondary">Ventas sistema</Typography>
-              <Typography variant="h5">
-                {formatMoney(resumen.ventasSistema.totalVentas)}
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: {
+            xs: '1fr',
+            sm: 'repeat(2, minmax(0, 1fr))',
+            lg: 'repeat(4, minmax(0, 1fr))',
+          },
+          gap: 2,
+          mb: 2,
+        }}
+      >
+        <SummaryCard
+          label="Ventas sistema"
+          value={formatMoney(resumen.ventasSistema.totalVentas)}
+        />
+        <SummaryCard label="Gastos diarios" value={formatMoney(resumen.gastosSistema)} />
+        <SummaryCard
+          label="Efectivo esperado"
+          value={formatMoney(resumen.efectivoEsperado)}
+        />
+        <SummaryCard
+          label="Diferencia total"
+          value={formatMoney(resumen.diferenciaTotal)}
+          color={differenceColor}
+        />
+      </Box>
 
-        <Grid item xs={12} md={3}>
-          <Card>
-            <CardContent>
-              <Typography color="text.secondary">Gastos diarios</Typography>
-              <Typography variant="h5">
-                {formatMoney(resumen.gastosSistema)}
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: {
+            xs: '1fr',
+            md: 'minmax(0, 1fr) minmax(0, 1fr)',
+          },
+          gap: 2,
+        }}
+      >
+        <Card sx={{ minWidth: 0 }}>
+          <CardContent>
+            <Typography variant="h6" mb={2}>
+              Sistema
+            </Typography>
 
-        <Grid item xs={12} md={3}>
-          <Card>
-            <CardContent>
-              <Typography color="text.secondary">Efectivo esperado</Typography>
-              <Typography variant="h5">
-                {formatMoney(resumen.efectivoEsperado)}
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
+            <Stack spacing={1}>
+              <AmountRow
+                label="Efectivo ventas"
+                value={formatMoney(resumen.ventasSistema.efectivo)}
+              />
+              <AmountRow
+                label="Dólares recibidos"
+                value={`$${resumen.ventasSistema.dolaresUsd.toFixed(2)} USD`}
+              />
+              <AmountRow
+                label="Dólares en MXN"
+                value={formatMoney(resumen.ventasSistema.dolaresMxn)}
+              />
+              <AmountRow
+                label="Tarjeta"
+                value={formatMoney(resumen.ventasSistema.tarjeta)}
+              />
+              <AmountRow
+                label="Transferencias"
+                value={formatMoney(resumen.ventasSistema.transferencias)}
+              />
 
-        <Grid item xs={12} md={3}>
-          <Card>
-            <CardContent>
-              <Typography color="text.secondary">Diferencia total</Typography>
-              <Typography
-                variant="h5"
-                color={
-                  resumen.diferenciaTotal === 0
-                    ? 'text.primary'
-                    : resumen.diferenciaTotal > 0
-                      ? 'success.main'
-                      : 'error.main'
+              <Divider />
+
+              <AmountRow
+                label="Menos gastos diarios"
+                value={formatMoney(resumen.gastosSistema)}
+              />
+            </Stack>
+          </CardContent>
+        </Card>
+
+        <Card sx={{ minWidth: 0 }}>
+          <CardContent>
+            <Typography variant="h6" mb={2}>
+              Dinero contado
+            </Typography>
+
+            <Box
+              sx={{
+                display: 'grid',
+                gridTemplateColumns: {
+                  xs: '1fr',
+                  sm: 'repeat(2, minmax(0, 1fr))',
+                },
+                gap: 2,
+              }}
+            >
+              <TextField
+                label="Efectivo MXN"
+                type="number"
+                fullWidth
+                value={conteo.efectivoMxn}
+                onChange={(e) =>
+                  setConteo({ ...conteo, efectivoMxn: e.target.value })
                 }
+              />
+              <TextField
+                label="Dólares USD"
+                type="number"
+                fullWidth
+                value={conteo.dolaresUsd}
+                onChange={(e) =>
+                  setConteo({ ...conteo, dolaresUsd: e.target.value })
+                }
+              />
+              <TextField
+                label="Tarjeta MXN"
+                type="number"
+                fullWidth
+                value={conteo.tarjetaMxn}
+                onChange={(e) =>
+                  setConteo({ ...conteo, tarjetaMxn: e.target.value })
+                }
+              />
+              <TextField
+                label="Transferencias MXN"
+                type="number"
+                fullWidth
+                value={conteo.transferenciasMxn}
+                onChange={(e) =>
+                  setConteo({ ...conteo, transferenciasMxn: e.target.value })
+                }
+              />
+              <TextField
+                label="Depósitos MXN"
+                type="number"
+                fullWidth
+                value={conteo.depositosMxn}
+                onChange={(e) =>
+                  setConteo({ ...conteo, depositosMxn: e.target.value })
+                }
+              />
+              <TextField
+                label="Fondo de caja MXN"
+                type="number"
+                fullWidth
+                value={conteo.fondoCajaMxn}
+                onChange={(e) =>
+                  setConteo({ ...conteo, fondoCajaMxn: e.target.value })
+                }
+              />
+              <TextField
+                label="Observaciones"
+                fullWidth
+                multiline
+                rows={3}
+                value={conteo.observaciones}
+                onChange={(e) =>
+                  setConteo({ ...conteo, observaciones: e.target.value })
+                }
+                sx={{ gridColumn: '1 / -1' }}
+              />
+            </Box>
+
+            <Stack direction="row" justifyContent="flex-end" mt={2}>
+              <Button
+                variant="contained"
+                onClick={guardarCorte}
+                disabled={saving || Boolean(corteExistente)}
               >
-                {formatMoney(resumen.diferenciaTotal)}
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
-
-      <Grid container spacing={2}>
-        <Grid item xs={12} md={6}>
-          <Card sx={{ height: '100%' }}>
-            <CardContent>
-              <Typography variant="h6" mb={2}>
-                Sistema
-              </Typography>
-
-              <Stack spacing={1}>
-                <Stack direction="row" justifyContent="space-between">
-                  <Typography>Efectivo ventas</Typography>
-                  <Typography fontWeight={700}>
-                    {formatMoney(resumen.ventasSistema.efectivo)}
-                  </Typography>
-                </Stack>
-                <Stack direction="row" justifyContent="space-between">
-                  <Typography>Dólares recibidos</Typography>
-                  <Typography fontWeight={700}>
-                    ${resumen.ventasSistema.dolaresUsd.toFixed(2)} USD
-                  </Typography>
-                </Stack>
-                <Stack direction="row" justifyContent="space-between">
-                  <Typography>Dólares en MXN</Typography>
-                  <Typography fontWeight={700}>
-                    {formatMoney(resumen.ventasSistema.dolaresMxn)}
-                  </Typography>
-                </Stack>
-                <Stack direction="row" justifyContent="space-between">
-                  <Typography>Tarjeta</Typography>
-                  <Typography fontWeight={700}>
-                    {formatMoney(resumen.ventasSistema.tarjeta)}
-                  </Typography>
-                </Stack>
-                <Stack direction="row" justifyContent="space-between">
-                  <Typography>Transferencias</Typography>
-                  <Typography fontWeight={700}>
-                    {formatMoney(resumen.ventasSistema.transferencias)}
-                  </Typography>
-                </Stack>
-
-                <Divider />
-
-                <Stack direction="row" justifyContent="space-between">
-                  <Typography>Menos gastos diarios</Typography>
-                  <Typography fontWeight={700}>
-                    {formatMoney(resumen.gastosSistema)}
-                  </Typography>
-                </Stack>
-              </Stack>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        <Grid item xs={12} md={6}>
-          <Card>
-            <CardContent>
-              <Typography variant="h6" mb={2}>
-                Dinero contado
-              </Typography>
-
-              <Grid container spacing={2}>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    label="Efectivo MXN"
-                    type="number"
-                    fullWidth
-                    value={conteo.efectivoMxn}
-                    onChange={(e) =>
-                      setConteo({ ...conteo, efectivoMxn: e.target.value })
-                    }
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    label="Dólares USD"
-                    type="number"
-                    fullWidth
-                    value={conteo.dolaresUsd}
-                    onChange={(e) =>
-                      setConteo({ ...conteo, dolaresUsd: e.target.value })
-                    }
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    label="Tarjeta MXN"
-                    type="number"
-                    fullWidth
-                    value={conteo.tarjetaMxn}
-                    onChange={(e) =>
-                      setConteo({ ...conteo, tarjetaMxn: e.target.value })
-                    }
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    label="Transferencias MXN"
-                    type="number"
-                    fullWidth
-                    value={conteo.transferenciasMxn}
-                    onChange={(e) =>
-                      setConteo({
-                        ...conteo,
-                        transferenciasMxn: e.target.value,
-                      })
-                    }
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    label="Depósitos MXN"
-                    type="number"
-                    fullWidth
-                    value={conteo.depositosMxn}
-                    onChange={(e) =>
-                      setConteo({ ...conteo, depositosMxn: e.target.value })
-                    }
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    label="Fondo de caja MXN"
-                    type="number"
-                    fullWidth
-                    value={conteo.fondoCajaMxn}
-                    onChange={(e) =>
-                      setConteo({ ...conteo, fondoCajaMxn: e.target.value })
-                    }
-                  />
-                </Grid>
-                <Grid item xs={12}>
-                  <TextField
-                    label="Observaciones"
-                    fullWidth
-                    multiline
-                    rows={3}
-                    value={conteo.observaciones}
-                    onChange={(e) =>
-                      setConteo({ ...conteo, observaciones: e.target.value })
-                    }
-                  />
-                </Grid>
-              </Grid>
-
-              <Stack direction="row" justifyContent="flex-end" mt={2}>
-                <Button
-                  variant="contained"
-                  onClick={guardarCorte}
-                  disabled={saving || Boolean(corteExistente)}
-                >
-                  Guardar corte
-                </Button>
-              </Stack>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
+                Guardar corte
+              </Button>
+            </Stack>
+          </CardContent>
+        </Card>
+      </Box>
 
       <Typography variant="h6" mt={3} mb={1}>
         Historial de cortes
@@ -434,7 +433,14 @@ function CortesContent() {
             <Card key={corte.id}>
               <CardContent>
                 <Stack spacing={1}>
-                  <Stack direction="row" justifyContent="space-between" gap={2}>
+                  <Box
+                    sx={{
+                      display: 'grid',
+                      gridTemplateColumns: 'minmax(0, 1fr) auto',
+                      gap: 2,
+                      alignItems: 'start',
+                    }}
+                  >
                     <Box sx={{ minWidth: 0 }}>
                       <Typography fontWeight={700}>{corte.fecha}</Typography>
                       <Typography color="text.secondary" fontSize={13} noWrap>
@@ -443,6 +449,7 @@ function CortesContent() {
                     </Box>
                     <Typography
                       fontWeight={800}
+                      sx={{ whiteSpace: 'nowrap' }}
                       color={
                         Number(corte.diferenciaTotalMxn || 0) === 0
                           ? 'text.primary'
@@ -453,26 +460,30 @@ function CortesContent() {
                     >
                       {formatMoney(corte.diferenciaTotalMxn)}
                     </Typography>
-                  </Stack>
+                  </Box>
 
                   <Divider />
 
-                  <Stack direction="row" justifyContent="space-between">
-                    <Typography color="text.secondary">Ventas</Typography>
-                    <Typography>{formatMoney(corte.totalVentasSistema)}</Typography>
-                  </Stack>
-                  <Stack direction="row" justifyContent="space-between">
-                    <Typography color="text.secondary">Gastos</Typography>
-                    <Typography>{formatMoney(corte.gastosSistemaMxn)}</Typography>
-                  </Stack>
-                  <Stack direction="row" justifyContent="space-between">
-                    <Typography color="text.secondary">Esperado</Typography>
-                    <Typography>{formatMoney(corte.efectivoEsperadoMxn)}</Typography>
-                  </Stack>
-                  <Stack direction="row" justifyContent="space-between">
-                    <Typography color="text.secondary">Contado</Typography>
-                    <Typography>{formatMoney(corte.efectivoContadoMxn)}</Typography>
-                  </Stack>
+                  <AmountRow
+                    label="Ventas"
+                    labelColor="text.secondary"
+                    value={formatMoney(corte.totalVentasSistema)}
+                  />
+                  <AmountRow
+                    label="Gastos"
+                    labelColor="text.secondary"
+                    value={formatMoney(corte.gastosSistemaMxn)}
+                  />
+                  <AmountRow
+                    label="Esperado"
+                    labelColor="text.secondary"
+                    value={formatMoney(corte.efectivoEsperadoMxn)}
+                  />
+                  <AmountRow
+                    label="Contado"
+                    labelColor="text.secondary"
+                    value={formatMoney(corte.efectivoContadoMxn)}
+                  />
 
                   {corte.observaciones && (
                     <Typography color="text.secondary" fontSize={13}>
