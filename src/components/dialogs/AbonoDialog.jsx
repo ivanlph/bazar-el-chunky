@@ -7,10 +7,23 @@ import {
   DialogTitle,
   MenuItem,
   TextField,
+  Box,
   useMediaQuery,
   useTheme,
 } from '@mui/material';
 import { listenApartadosCliente } from '../../services/apartados/apartadosService.js';
+
+const fieldSx = {
+  width: '100%',
+  '&.MuiFormControl-root': {
+    display: 'block',
+    height: 'auto',
+    minHeight: 0,
+  },
+  '& .MuiInputBase-root': {
+    minHeight: 56,
+  },
+};
 
 export default function AbonoDialog({ open, onClose, clientes, onSave }) {
   const theme = useTheme();
@@ -50,12 +63,15 @@ export default function AbonoDialog({ open, onClose, clientes, onSave }) {
   return (
     <Dialog open={open} onClose={onClose} fullScreen={isMobile} fullWidth maxWidth="sm">
       <DialogTitle>Agregar abono</DialogTitle>
-      <DialogContent sx={{ display: 'grid', gap: 2, pt: 1 }}>
+      <DialogContent sx={{ pt: 1 }}>
+        <Box sx={{ display: 'grid', gap: 2 }}>
         <TextField
           select
           label="Cliente"
           value={clienteId}
           onChange={(e) => setClienteId(e.target.value)}
+          fullWidth
+          sx={fieldSx}
         >
           {clientes.map((c) => (
             <MenuItem key={c.id} value={c.id}>
@@ -69,6 +85,8 @@ export default function AbonoDialog({ open, onClose, clientes, onSave }) {
           value={apartadoId}
           onChange={(e) => setApartadoId(e.target.value)}
           disabled={!clienteId}
+          fullWidth
+          sx={fieldSx}
         >
           {apartados.map((a) => (
             <MenuItem key={a.id} value={a.id}>
@@ -81,12 +99,16 @@ export default function AbonoDialog({ open, onClose, clientes, onSave }) {
           type="number"
           value={cantidad}
           onChange={(e) => setCantidad(e.target.value)}
+          fullWidth
+          sx={fieldSx}
         />
         <TextField
           select
           label="Método de pago"
           value={metodoPago}
           onChange={(e) => setMetodoPago(e.target.value)}
+          fullWidth
+          sx={fieldSx}
         >
           <MenuItem value="efectivo">Efectivo</MenuItem>
           <MenuItem value="tarjeta">Tarjeta</MenuItem>
@@ -100,15 +122,20 @@ export default function AbonoDialog({ open, onClose, clientes, onSave }) {
               type="number"
               value={recibidoUsd}
               onChange={(e) => setRecibidoUsd(e.target.value)}
+              fullWidth
+              sx={fieldSx}
             />
             <TextField
               label="Tipo de cambio"
               type="number"
               value={tipoCambio}
               onChange={(e) => setTipoCambio(e.target.value)}
+              fullWidth
+              sx={fieldSx}
             />
           </>
         )}
+        </Box>
       </DialogContent>
       <DialogActions>
         <Button variant="text" onClick={onClose}>

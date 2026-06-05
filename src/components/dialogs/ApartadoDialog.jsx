@@ -8,6 +8,7 @@ import {
   DialogTitle,
   MenuItem,
   TextField,
+  Box,
   useMediaQuery,
   useTheme,
 } from '@mui/material';
@@ -26,6 +27,18 @@ const initialForm = {
   fechaLimite: dayjs().add(30, 'day').format('YYYY-MM-DD'),
 };
 
+const fieldSx = {
+  width: '100%',
+  '&.MuiFormControl-root': {
+    display: 'block',
+    height: 'auto',
+    minHeight: 0,
+  },
+  '& .MuiInputBase-root': {
+    minHeight: 56,
+  },
+};
+
 export default function ApartadoDialog({ open, onClose, clientes, onSave }) {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -42,7 +55,8 @@ export default function ApartadoDialog({ open, onClose, clientes, onSave }) {
   return (
     <Dialog open={open} onClose={onClose} fullScreen={isMobile} fullWidth maxWidth="sm">
       <DialogTitle>Nuevo apartado</DialogTitle>
-      <DialogContent sx={{ display: 'grid', gap: 2, pt: 1 }}>
+      <DialogContent sx={{ pt: 1 }}>
+        <Box sx={{ display: 'grid', gap: 2 }}>
         {!nuevoCliente ? (
           <>
             <TextField
@@ -51,6 +65,7 @@ export default function ApartadoDialog({ open, onClose, clientes, onSave }) {
               value={form.clienteId}
               onChange={(e) => setForm({ ...form, clienteId: e.target.value })}
               fullWidth
+              sx={fieldSx}
             >
               {clientes.map((c) => (
                 <MenuItem key={c.id} value={c.id}>
@@ -70,12 +85,14 @@ export default function ApartadoDialog({ open, onClose, clientes, onSave }) {
               value={form.nombreCliente}
               onChange={(e) => setForm({ ...form, nombreCliente: e.target.value })}
               fullWidth
+              sx={fieldSx}
             />
             <TextField
               label="Teléfono"
               value={form.telefono}
               onChange={(e) => setForm({ ...form, telefono: e.target.value })}
               fullWidth
+              sx={fieldSx}
             />
             <Button onClick={() => setNuevoCliente(false)}>
               Seleccionar cliente existente
@@ -87,24 +104,32 @@ export default function ApartadoDialog({ open, onClose, clientes, onSave }) {
           label="Descripción del artículo"
           value={form.descripcion}
           onChange={(e) => setForm({ ...form, descripcion: e.target.value })}
+          fullWidth
+          sx={fieldSx}
         />
         <TextField
           label="Total de venta"
           type="number"
           value={form.total}
           onChange={(e) => setForm({ ...form, total: e.target.value })}
+          fullWidth
+          sx={fieldSx}
         />
         <TextField
           label="Cantidad a abonar"
           type="number"
           value={form.abonoInicial}
           onChange={(e) => setForm({ ...form, abonoInicial: e.target.value })}
+          fullWidth
+          sx={fieldSx}
         />
         <TextField
           select
           label="Método de pago del abono"
           value={form.metodoPago}
           onChange={(e) => setForm({ ...form, metodoPago: e.target.value })}
+          fullWidth
+          sx={fieldSx}
         >
           <MenuItem value="efectivo">Efectivo</MenuItem>
           <MenuItem value="tarjeta">Tarjeta</MenuItem>
@@ -118,12 +143,16 @@ export default function ApartadoDialog({ open, onClose, clientes, onSave }) {
               type="number"
               value={form.recibidoUsd}
               onChange={(e) => setForm({ ...form, recibidoUsd: e.target.value })}
+              fullWidth
+              sx={fieldSx}
             />
             <TextField
               label="Tipo de cambio"
               type="number"
               value={form.tipoCambio}
               onChange={(e) => setForm({ ...form, tipoCambio: e.target.value })}
+              fullWidth
+              sx={fieldSx}
             />
           </>
         )}
@@ -133,11 +162,14 @@ export default function ApartadoDialog({ open, onClose, clientes, onSave }) {
           value={form.fechaLimite}
           onChange={(e) => setForm({ ...form, fechaLimite: e.target.value })}
           InputLabelProps={{ shrink: true }}
+          fullWidth
+          sx={fieldSx}
         />
         <Alert severity="warning">
           Recuerda generar una hoja de apartado física para el cliente.
         </Alert>
         <Button disabled>Generar nota de apartado (pendiente)</Button>
+        </Box>
       </DialogContent>
       <DialogActions>
         <Button variant="text" onClick={onClose}>
