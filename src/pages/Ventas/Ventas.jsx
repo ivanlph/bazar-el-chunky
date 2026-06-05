@@ -46,7 +46,7 @@ const saveVenta = (data) =>
     cambioMxn: Number(data.cambioMxn || 0),
     importes: data.importes || [],
   });
-  const saveAbono = async (data) => { await registrarAbono({ ...data, ...base }); await agregarVenta({ ...base, tipo:'abono', descripcion:'Abono a apartado', categoria:'Apartado', monto:data.cantidad, apartadoId:data.apartadoId, clienteId:data.clienteId }); };
+  const saveAbono = async (data) => { await registrarAbono({ ...data, ...base }); await agregarVenta({ ...base, tipo:'abono', descripcion:'Abono a apartado', categoria:'Apartado', monto:data.cantidad, metodoPago:data.metodoPago || 'efectivo', recibidoUsd:Number(data.recibidoUsd || 0), tipoCambio:Number(data.tipoCambio || 0), equivalenteMxn:Number(data.equivalenteMxn || 0), apartadoId:data.apartadoId, clienteId:data.clienteId }); };
   const saveApartado = async (form) => {
     let clienteId = form.clienteId;
     if (!clienteId && form.nombreCliente) {
@@ -55,7 +55,7 @@ const saveVenta = (data) =>
     }
     const total = Number(form.total); const abonado = Number(form.abonoInicial || 0);
     const ap = await crearApartado({ clienteId, descripcion:form.descripcion, total, abonado, saldo: total-abonado, fechaLimite:form.fechaLimite, sucursalId:user.sucursalId, usuarioId:user.uid });
-    await agregarVenta({ ...base, tipo:'apartado', descripcion:form.descripcion, categoria:'Apartado', monto:abonado, apartadoId:ap.id, clienteId });
+    await agregarVenta({ ...base, tipo:'apartado', descripcion:form.descripcion, categoria:'Apartado', monto:abonado, metodoPago:form.metodoPago || 'efectivo', recibidoUsd:Number(form.recibidoUsd || 0), tipoCambio:Number(form.tipoCambio || 0), equivalenteMxn:Number(form.recibidoUsd || 0) * Number(form.tipoCambio || 0), apartadoId:ap.id, clienteId });
   };
 
   return (

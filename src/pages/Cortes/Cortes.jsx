@@ -29,8 +29,10 @@ import { useUser } from '../../contexts/UserContext.jsx';
 import { formatMoney, todayKey } from '../../utils/date.js';
 
 const initialConteo = {
-  efectivoMxn: '',
-  dolaresUsd: '',
+  billetesMxn: '',
+  monedasMxn: '',
+  billetesUsd: '',
+  monedasUsd: '',
   tarjetaMxn: '',
   transferenciasMxn: '',
   depositosMxn: '',
@@ -134,13 +136,18 @@ function CortesContent() {
     );
 
     const contado = {
-      efectivoMxn: numberValue(conteo.efectivoMxn),
-      dolaresUsd: numberValue(conteo.dolaresUsd),
+      billetesMxn: numberValue(conteo.billetesMxn),
+      monedasMxn: numberValue(conteo.monedasMxn),
+      billetesUsd: numberValue(conteo.billetesUsd),
+      monedasUsd: numberValue(conteo.monedasUsd),
       tarjetaMxn: numberValue(conteo.tarjetaMxn),
       transferenciasMxn: numberValue(conteo.transferenciasMxn),
       depositosMxn: numberValue(conteo.depositosMxn),
       fondoCajaMxn: numberValue(conteo.fondoCajaMxn),
     };
+
+    contado.efectivoMxn = contado.billetesMxn + contado.monedasMxn;
+    contado.dolaresUsd = contado.billetesUsd + contado.monedasUsd;
 
     const efectivoEsperado =
       ventasSistema.efectivo + ventasSistema.dolaresMxn - gastosSistema;
@@ -189,7 +196,11 @@ function CortesContent() {
         transferenciasSistemaMxn: resumen.ventasSistema.transferencias,
         gastosSistemaMxn: resumen.gastosSistema,
         efectivoEsperadoMxn: resumen.efectivoEsperado,
+        billetesMxn: resumen.contado.billetesMxn,
+        monedasMxn: resumen.contado.monedasMxn,
         efectivoContadoMxn: resumen.contado.efectivoMxn,
+        billetesUsd: resumen.contado.billetesUsd,
+        monedasUsd: resumen.contado.monedasUsd,
         dolaresContadosUsd: resumen.contado.dolaresUsd,
         tarjetaContadaMxn: resumen.contado.tarjetaMxn,
         transferenciasContadasMxn: resumen.contado.transferenciasMxn,
@@ -333,6 +344,17 @@ function CortesContent() {
               Dinero contado
             </Typography>
 
+            <Stack spacing={0.5} mb={2}>
+              <AmountRow
+                label="Total efectivo MXN"
+                value={formatMoney(resumen.contado.efectivoMxn)}
+              />
+              <AmountRow
+                label="Total dólares"
+                value={`$${resumen.contado.dolaresUsd.toFixed(2)} USD`}
+              />
+            </Stack>
+
             <Box
               sx={{
                 display: 'grid',
@@ -344,21 +366,39 @@ function CortesContent() {
               }}
             >
               <TextField
-                label="Efectivo MXN"
+                label="Billetes MXN"
                 type="number"
                 fullWidth
-                value={conteo.efectivoMxn}
+                value={conteo.billetesMxn}
                 onChange={(e) =>
-                  setConteo({ ...conteo, efectivoMxn: e.target.value })
+                  setConteo({ ...conteo, billetesMxn: e.target.value })
                 }
               />
               <TextField
-                label="Dólares USD"
+                label="Monedas MXN"
                 type="number"
                 fullWidth
-                value={conteo.dolaresUsd}
+                value={conteo.monedasMxn}
                 onChange={(e) =>
-                  setConteo({ ...conteo, dolaresUsd: e.target.value })
+                  setConteo({ ...conteo, monedasMxn: e.target.value })
+                }
+              />
+              <TextField
+                label="Billetes USD"
+                type="number"
+                fullWidth
+                value={conteo.billetesUsd}
+                onChange={(e) =>
+                  setConteo({ ...conteo, billetesUsd: e.target.value })
+                }
+              />
+              <TextField
+                label="Monedas USD"
+                type="number"
+                fullWidth
+                value={conteo.monedasUsd}
+                onChange={(e) =>
+                  setConteo({ ...conteo, monedasUsd: e.target.value })
                 }
               />
               <TextField
