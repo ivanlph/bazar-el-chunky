@@ -5,6 +5,7 @@ const UserContext = createContext({
   user: { uid: '', nombre: '', rol: 'empleado', sucursalId: 'principal' },
   isSuperUser: false,
   isAdmin: false,
+  canManagePayroll: false,
 });
 
 function normalizeRole(role) {
@@ -31,6 +32,7 @@ export const UserProvider = ({ children }) => {
       user,
       isSuperUser: rol === 'superadmin',
       isAdmin: rol === 'superadmin' || rol === 'admin',
+      canManagePayroll: ['superadmin', 'admin', 'gerente', 'manager', 'administrador', 'administradora'].includes(rol),
     };
   }, [authUser, perfil]);
 

@@ -5,11 +5,14 @@ import {
   Button,
   Card,
   CardContent,
+  Checkbox,
+  Chip,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
   Fab,
+  FormControlLabel,
   Grid,
   IconButton,
   MenuItem,
@@ -26,6 +29,9 @@ import {
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
+import LoginIcon from '@mui/icons-material/Login';
+import LogoutIcon from '@mui/icons-material/Logout';
+import PaymentsIcon from '@mui/icons-material/Payments';
 import dayjs from 'dayjs';
 import ResponsiveTable from '../../components/ResponsiveTable.jsx';
 import { useUser } from '../../contexts/UserContext.jsx';
@@ -42,8 +48,9 @@ const empleadoInicial = { nombre: '', puesto: '', pagoHora: '' };
 const horarioInicial = {
   empleadoId: '',
   fecha: dayjs().format('YYYY-MM-DD'),
-  entrada: '08:00',
-  salida: '17:00',
+  entrada: '',
+  salida: '',
+  pagado: false,
 };
 
 function calcularHoras(fecha, entrada, salida) {
@@ -72,14 +79,26 @@ function rangoFechas(inicio, fin) {
   return fechas;
 }
 
+function horaActual() {
+  return dayjs().format('HH:mm');
+}
+
+function estaPagado(horario) {
+  if (!horario) return false;
+  if (typeof horario.pagado === 'boolean') return horario.pagado;
+  return Boolean(horario.salida);
+}
+
 export default function Nominas() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-  const { user, isAdmin } = useUser();
+  const { user, isAdmin, canManagePayroll } = useUser();
   const [empleados, setEmpleados] = useState([]);
   const [horarios, setHorarios] = useState([]);
   const [open, setOpen] = useState(null);
   const [editingId, setEditingId] = useState(null);
+  const [savingKey, setSavingKey] = useState('');
+  const [error, setError] = useState('');
   const [periodo, setPeriodo] = useState({
     inicio: dayjs().startOf('week').format('YYYY-MM-DD'),
     fin: dayjs().endOf('week').format('YYYY-MM-DD'),
@@ -98,15 +117,21 @@ export default function Nominas() {
     [empleados]
   );
 
+  const horariosPorEmpleadoFecha = useMemo(
+    () =>
+      new Map(
+        horarios.map((horario) => [`${horario.empleadoId}-${horario.fecha}`, horario])
+      ),
+    [horarios]
+  );
+
   const filas = useMemo(() => {
     const fechas = rangoFechas(periodo.inicio, periodo.fin);
-    const porEmpleadoFecha = new Map(
-      horarios.map((horario) => [`${horario.empleadoId}-${horario.fecha}`, horario])
-    );
 
     return fechas.flatMap((fecha) =>
       empleadosActivos.map((empleado) => {
-        const horario = porEmpleadoFecha.get(`${empleado.id}-${fecha}`);
+        const horario = horariosPorEmpleadoFecha.get(`${empleado.id}-${fecha}`);
+        const pagado = estaPagado(horario);
         const horas = Number(
           horario?.horas ?? calcularHoras(fecha, horario?.entrada, horario?.salida)
         );
@@ -118,10 +143,12 @@ export default function Nominas() {
           horario,
           horas,
           total: horas * Number(empleado.pagoHora || 0),
+          pagado,
+          estadoPago: horario ? (pagado ? 'pagado' : 'pendiente') : 'sinTiempo',
         };
       })
     );
-  }, [empleadosActivos, horarios, periodo.fin, periodo.inicio]);
+  }, [empleadosActivos, horariosPorEmpleadoFecha, periodo.fin, periodo.inicio]);
 
   const totales = useMemo(
     () =>
@@ -129,11 +156,36 @@ export default function Nominas() {
         (sum, fila) => ({
           horas: sum.horas + Number(fila.horas || 0),
           monto: sum.monto + Number(fila.total || 0),
+          pagado: sum.pagado + (fila.pagado ? Number(fila.total || 0) : 0),
+          pendiente: sum.pendiente + (fila.estadoPago === 'pendiente' ? Number(fila.total || 0) : 0),
         }),
-        { horas: 0, monto: 0 }
+        { horas: 0, monto: 0, pagado: 0, pendiente: 0 }
       ),
     [filas]
   );
+
+  const filasHoy = useMemo(() => {
+    const fecha = dayjs().format('YYYY-MM-DD');
+
+    return empleadosActivos.map((empleado) => {
+      const horario = horariosPorEmpleadoFecha.get(`${empleado.id}-${fecha}`);
+      const pagado = estaPagado(horario);
+      const horas = Number(
+        horario?.horas ?? calcularHoras(fecha, horario?.entrada, horario?.salida)
+      );
+
+      return {
+        key: `${empleado.id}-${fecha}`,
+        fecha,
+        empleado,
+        horario,
+        horas,
+        total: horas * Number(empleado.pagoHora || 0),
+        pagado,
+        estadoPago: horario ? (pagado ? 'pagado' : 'pendiente') : 'sinTiempo',
+      };
+    });
+  }, [empleadosActivos, horariosPorEmpleadoFecha]);
 
   const abrirHorario = (fila) => {
     if (!isAdmin) return;
@@ -144,6 +196,7 @@ export default function Nominas() {
       fecha: fila.fecha,
       entrada: fila.horario?.entrada || '08:00',
       salida: fila.horario?.salida || '17:00',
+      pagado: fila.horario ? estaPagado(fila.horario) : false,
     });
     setOpen('horario');
   };
@@ -152,39 +205,126 @@ export default function Nominas() {
     setOpen(null);
     setEditingId(null);
     setHora(horarioInicial);
+    setError('');
   };
+
+  const guardarRegistroRapido = async (fila, cambios) => {
+    if (!canManagePayroll) return;
+    const actionKey = `${fila.key}-${Object.keys(cambios).join('-')}`;
+
+    setSavingKey(actionKey);
+    setError('');
+
+    try {
+      const actual = fila.horario || {};
+      const data = {
+        empleadoId: fila.empleado.id,
+        fecha: fila.fecha,
+        entrada: actual.entrada || '',
+        salida: actual.salida || '',
+        pagado: estaPagado(actual),
+        ...cambios,
+        sucursalId: user.sucursalId,
+        usuarioId: user.uid,
+      };
+
+      const horas = calcularHoras(data.fecha, data.entrada, data.salida);
+      const total = horas * Number(fila.empleado.pagoHora || 0);
+
+      data.horas = horas;
+      data.pagoMontoMxn = data.pagado ? total : 0;
+      data.pagoOrigen = data.pagado ? 'fondoCaja' : '';
+
+      if (fila.horario?.id) {
+        await actualizarHorario(fila.horario.id, data);
+      } else {
+        await agregarHorario(data);
+      }
+    } catch (err) {
+      console.error('Error al guardar horario:', err);
+      setError(err?.message || 'No se pudo guardar el horario.');
+    } finally {
+      setSavingKey('');
+    }
+  };
+
+  const marcarEntrada = (fila) =>
+    guardarRegistroRapido(fila, {
+      entrada: horaActual(),
+      salida: fila.horario?.salida || '',
+      pagado: estaPagado(fila.horario),
+    });
+
+  const marcarSalida = (fila) =>
+    guardarRegistroRapido(fila, {
+      entrada: fila.horario?.entrada || horaActual(),
+      salida: horaActual(),
+      pagado: estaPagado(fila.horario),
+    });
+
+  const marcarPagado = (fila) =>
+    guardarRegistroRapido(fila, {
+      entrada: fila.horario?.entrada || '',
+      salida: fila.horario?.salida || '',
+      pagado: true,
+    });
 
   const guardarEmpleado = async () => {
     if (!isAdmin) return;
 
-    await agregarEmpleado({
-      ...emp,
-      pagoHora: Number(emp.pagoHora || 0),
-      sucursalId: user.sucursalId,
-      usuarioId: user.uid,
-    });
-    setEmp(empleadoInicial);
-    setOpen(null);
+    setSavingKey('empleado');
+    setError('');
+
+    try {
+      await agregarEmpleado({
+        ...emp,
+        pagoHora: Number(emp.pagoHora || 0),
+        sucursalId: user.sucursalId,
+        usuarioId: user.uid,
+      });
+      setEmp(empleadoInicial);
+      setOpen(null);
+    } catch (err) {
+      console.error('Error al guardar empleado:', err);
+      setError(err?.message || 'No se pudo guardar el empleado.');
+    } finally {
+      setSavingKey('');
+    }
   };
 
   const guardarHorario = async () => {
     if (!isAdmin) return;
 
-    const horas = calcularHoras(hora.fecha, hora.entrada, hora.salida);
-    const data = {
-      ...hora,
-      horas,
-      sucursalId: user.sucursalId,
-      usuarioId: user.uid,
-    };
+    setSavingKey('horario');
+    setError('');
 
-    if (editingId) {
-      await actualizarHorario(editingId, data);
-    } else {
-      await agregarHorario(data);
+    try {
+      const horas = calcularHoras(hora.fecha, hora.entrada, hora.salida);
+      const empleado = empleados.find((item) => item.id === hora.empleadoId);
+      const total = horas * Number(empleado?.pagoHora || 0);
+      const data = {
+        ...hora,
+        horas,
+        pagado: Boolean(hora.pagado),
+        pagoMontoMxn: Boolean(hora.pagado) ? total : 0,
+        pagoOrigen: Boolean(hora.pagado) ? 'fondoCaja' : '',
+        sucursalId: user.sucursalId,
+        usuarioId: user.uid,
+      };
+
+      if (editingId) {
+        await actualizarHorario(editingId, data);
+      } else {
+        await agregarHorario(data);
+      }
+
+      cerrarDialogos();
+    } catch (err) {
+      console.error('Error al guardar horario:', err);
+      setError(err?.message || 'No se pudo guardar el horario.');
+    } finally {
+      setSavingKey('');
     }
-
-    cerrarDialogos();
   };
 
   return (
@@ -205,16 +345,145 @@ export default function Nominas() {
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
             <Button fullWidth={isMobile} onClick={() => setOpen('empleado')}>Agregar empleado</Button>
             <Button fullWidth={isMobile} onClick={() => abrirHorario({ fecha: dayjs().format('YYYY-MM-DD'), empleado: empleadosActivos[0] || {} })} disabled={!empleadosActivos.length}>
-              Agregar tiempo
+              Editar tiempo manual
             </Button>
           </Stack>
         )}
       </Stack>
 
-      {!isAdmin && (
+      {!canManagePayroll && (
         <Alert severity="info" sx={{ mb: 2 }}>
-          Solo administradores y superadministradores pueden modificar las tarjetas de tiempo.
+          Solo administradores, superadministradores y gerentes pueden modificar las tarjetas de tiempo.
         </Alert>
+      )}
+
+      {error && (
+        <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError('')}>
+          {error}
+        </Alert>
+      )}
+
+      {canManagePayroll && (
+        <Box mb={2.5}>
+          <Typography variant="h6" mb={1}>
+            Registro de hoy
+          </Typography>
+
+          <Box
+            sx={{
+              display: 'grid',
+              gridTemplateColumns: {
+                xs: '1fr',
+                md: 'repeat(2, minmax(0, 1fr))',
+                xl: 'repeat(3, minmax(0, 1fr))',
+              },
+              gap: 1.5,
+            }}
+          >
+            {filasHoy.map((fila) => {
+              const tieneEntrada = Boolean(fila.horario?.entrada);
+              const tieneSalida = Boolean(fila.horario?.salida);
+              const estaPagado = Boolean(fila.horario?.pagado);
+
+              return (
+                <Card key={fila.key} sx={{ borderRadius: 2 }}>
+                  <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
+                    <Stack spacing={1.5}>
+                      <Stack direction="row" justifyContent="space-between" alignItems="flex-start" spacing={1.5}>
+                        <Box sx={{ minWidth: 0 }}>
+                          <Typography fontWeight={800} sx={{ overflowWrap: 'anywhere' }}>
+                            {fila.empleado.nombre}
+                          </Typography>
+                          <Typography color="text.secondary" fontSize={13}>
+                            {fila.empleado.puesto || 'Sin puesto'}
+                          </Typography>
+                        </Box>
+                        <Chip
+                          size="small"
+                          label={fila.estadoPago === 'pagado' ? 'Pagado' : fila.estadoPago === 'pendiente' ? 'Pendiente' : 'Sin tiempo'}
+                          color={fila.estadoPago === 'pagado' ? 'success' : fila.estadoPago === 'pendiente' ? 'warning' : 'default'}
+                          variant={fila.estadoPago === 'pagado' ? 'filled' : 'outlined'}
+                        />
+                      </Stack>
+
+                      <Box
+                        sx={{
+                          display: 'grid',
+                          gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
+                          gap: 1,
+                        }}
+                      >
+                        <Box>
+                          <Typography color="text.secondary" fontSize={12}>Entrada</Typography>
+                          <Typography fontWeight={700}>{fila.horario?.entrada || '-'}</Typography>
+                        </Box>
+                        <Box>
+                          <Typography color="text.secondary" fontSize={12}>Salida</Typography>
+                          <Typography fontWeight={700}>{fila.horario?.salida || '-'}</Typography>
+                        </Box>
+                        <Box>
+                          <Typography color="text.secondary" fontSize={12}>Pago</Typography>
+                          <Typography fontWeight={700}>{fila.total ? formatMoney(fila.total) : '-'}</Typography>
+                        </Box>
+                      </Box>
+
+                      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
+                        <Button
+                          fullWidth
+                          variant={tieneEntrada ? 'outlined' : 'contained'}
+                          startIcon={<LoginIcon />}
+                          onClick={() => marcarEntrada(fila)}
+                          disabled={tieneEntrada || Boolean(savingKey)}
+                        >
+                          Entrada
+                        </Button>
+                        <Button
+                          fullWidth
+                          variant={tieneSalida ? 'outlined' : 'contained'}
+                          startIcon={<LogoutIcon />}
+                          onClick={() => marcarSalida(fila)}
+                          disabled={!tieneEntrada || tieneSalida || Boolean(savingKey)}
+                        >
+                          Salida
+                        </Button>
+                        <Button
+                          fullWidth
+                          variant={estaPagado ? 'outlined' : 'contained'}
+                          color="success"
+                          startIcon={<PaymentsIcon />}
+                          onClick={() => marcarPagado(fila)}
+                          disabled={!tieneSalida || estaPagado || Boolean(savingKey)}
+                        >
+                          Pagado
+                        </Button>
+                      </Stack>
+
+                      {isAdmin && (
+                        <Button
+                          variant="text"
+                          size="small"
+                          startIcon={<EditIcon />}
+                          onClick={() => abrirHorario(fila)}
+                          sx={{ alignSelf: 'flex-start' }}
+                        >
+                          Corregir
+                        </Button>
+                      )}
+                    </Stack>
+                  </CardContent>
+                </Card>
+              );
+            })}
+
+            {!filasHoy.length && (
+              <Card sx={{ p: 2, borderRadius: 2 }}>
+                <Typography color="text.secondary">
+                  Agrega empleados para usar el registro rápido.
+                </Typography>
+              </Card>
+            )}
+          </Box>
+        </Box>
       )}
 
       <Box
@@ -239,7 +508,10 @@ export default function Nominas() {
           Horas del periodo: {totales.horas.toFixed(2)}
         </Alert>
         <Alert severity="success" sx={{ flex: 1 }}>
-          Nómina estimada: {formatMoney(totales.monto)}
+          Pagado del fondo: {formatMoney(totales.pagado)}
+        </Alert>
+        <Alert severity={totales.pendiente > 0 ? 'warning' : 'info'} sx={{ flex: 1 }}>
+          Pendiente: {formatMoney(totales.pendiente)}
         </Alert>
       </Stack>
 
@@ -304,6 +576,15 @@ export default function Nominas() {
                     <Typography color="text.secondary" fontSize={12}>Total</Typography>
                     <Typography fontWeight={800}>{fila.total ? formatMoney(fila.total) : '-'}</Typography>
                   </Box>
+                  <Box sx={{ gridColumn: '1 / -1' }}>
+                    <Typography color="text.secondary" fontSize={12}>Estado</Typography>
+                    <Chip
+                      size="small"
+                      label={fila.estadoPago === 'pagado' ? 'Pagado del fondo' : fila.estadoPago === 'pendiente' ? 'Pendiente' : 'Sin tiempo'}
+                      color={fila.estadoPago === 'pagado' ? 'success' : fila.estadoPago === 'pendiente' ? 'warning' : 'default'}
+                      variant={fila.pagado ? 'filled' : 'outlined'}
+                    />
+                  </Box>
                 </Box>
               </CardContent>
             </Card>
@@ -330,6 +611,7 @@ export default function Nominas() {
                 <TableCell align="right">Horas</TableCell>
                 <TableCell align="right">Pago/Hora</TableCell>
                 <TableCell align="right">Total</TableCell>
+                <TableCell>Estado</TableCell>
                 {isAdmin && <TableCell align="right">Editar</TableCell>}
               </TableRow>
             </TableHead>
@@ -344,6 +626,14 @@ export default function Nominas() {
                   <TableCell align="right">{fila.horas ? fila.horas.toFixed(2) : '-'}</TableCell>
                   <TableCell align="right">{formatMoney(fila.empleado.pagoHora)}</TableCell>
                   <TableCell align="right">{fila.total ? formatMoney(fila.total) : '-'}</TableCell>
+                  <TableCell>
+                    <Chip
+                      size="small"
+                      label={fila.estadoPago === 'pagado' ? 'Pagado del fondo' : fila.estadoPago === 'pendiente' ? 'Pendiente' : 'Sin tiempo'}
+                      color={fila.estadoPago === 'pagado' ? 'success' : fila.estadoPago === 'pendiente' ? 'warning' : 'default'}
+                      variant={fila.pagado ? 'filled' : 'outlined'}
+                    />
+                  </TableCell>
                   {isAdmin && (
                     <TableCell align="right">
                       <IconButton size="small" onClick={() => abrirHorario(fila)}>
@@ -356,7 +646,7 @@ export default function Nominas() {
 
               {!filas.length && (
                 <TableRow>
-                  <TableCell colSpan={isAdmin ? 9 : 8}>
+                  <TableCell colSpan={isAdmin ? 10 : 9}>
                     Agrega empleados para empezar a capturar tarjetas de tiempo.
                   </TableCell>
                 </TableRow>
@@ -389,7 +679,7 @@ export default function Nominas() {
             Cancelar
           </Button>
           <Button onClick={guardarEmpleado} disabled={!emp.nombre || !emp.pagoHora}>
-            Guardar
+            {savingKey === 'empleado' ? 'Guardando...' : 'Guardar'}
           </Button>
         </DialogActions>
       </Dialog>
@@ -407,16 +697,30 @@ export default function Nominas() {
           <TextField type="date" label="Fecha" value={hora.fecha} onChange={(e) => setHora({ ...hora, fecha: e.target.value })} InputLabelProps={{ shrink: true }} />
           <TextField type="time" label="Entrada" value={hora.entrada} onChange={(e) => setHora({ ...hora, entrada: e.target.value })} InputLabelProps={{ shrink: true }} />
           <TextField type="time" label="Salida" value={hora.salida} onChange={(e) => setHora({ ...hora, salida: e.target.value })} InputLabelProps={{ shrink: true }} />
+          <FormControlLabel
+            control={
+              <Checkbox
+                checked={Boolean(hora.pagado)}
+                onChange={(e) => setHora({ ...hora, pagado: e.target.checked })}
+              />
+            }
+            label="Pagado del fondo de caja"
+          />
           <Alert severity="info">
             Horas calculadas: {calcularHoras(hora.fecha, hora.entrada, hora.salida).toFixed(2)}
           </Alert>
+          {error && (
+            <Alert severity="error" onClose={() => setError('')}>
+              {error}
+            </Alert>
+          )}
         </DialogContent>
         <DialogActions>
           <Button variant="text" onClick={cerrarDialogos}>
             Cancelar
           </Button>
-          <Button onClick={guardarHorario} disabled={!hora.empleadoId || !hora.fecha || !hora.entrada || !hora.salida}>
-            Guardar tiempo
+          <Button onClick={guardarHorario} disabled={savingKey === 'horario' || !hora.empleadoId || !hora.fecha || !hora.entrada || !hora.salida}>
+            {savingKey === 'horario' ? 'Guardando...' : 'Guardar tiempo'}
           </Button>
         </DialogActions>
       </Dialog>

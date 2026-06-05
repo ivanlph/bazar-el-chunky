@@ -15,7 +15,11 @@ function sortByCreatedAtDesc(rows) {
 
 export function listenGastosDelDia(fecha, callback) {
   if (!firebaseReady) {
-    return localListen('gastosDiarios', callback, (x) => x.fecha === fecha);
+    return localListen(
+      'gastosDiarios',
+      callback,
+      (x) => x.fecha === fecha && x.tipo !== 'nomina'
+    );
   }
 
   const q = query(collection(db, 'gastosDiarios'), where('fecha', '==', fecha));
@@ -23,7 +27,9 @@ export function listenGastosDelDia(fecha, callback) {
   return onSnapshot(
     q,
     (snap) => {
-      const gastos = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+      const gastos = snap.docs
+        .map((d) => ({ id: d.id, ...d.data() }))
+        .filter((gasto) => gasto.tipo !== 'nomina');
       callback(sortByCreatedAtDesc(gastos));
     },
     (error) => {

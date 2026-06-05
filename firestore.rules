@@ -10,6 +10,7 @@ service cloud.firestore {
         && (
           profile().rol in ['superadmin', 'superAdmin', 'SuperAdmin', 'Superadmin']
           || profile().role in ['superadmin', 'superAdmin', 'SuperAdmin', 'Superadmin']
+          || profile().tipoUsuario in ['superadmin', 'superAdmin', 'SuperAdmin', 'Superadmin']
         );
     }
     function isAdmin() {
@@ -17,6 +18,16 @@ service cloud.firestore {
         && (
           profile().rol in ['admin', 'superadmin', 'Admin', 'SuperAdmin', 'Superadmin', 'superAdmin']
           || profile().role in ['admin', 'superadmin', 'Admin', 'SuperAdmin', 'Superadmin', 'superAdmin']
+          || profile().tipoUsuario in ['admin', 'superadmin', 'Admin', 'SuperAdmin', 'Superadmin', 'superAdmin']
+        );
+    }
+    function canManagePayroll() {
+      return signedIn()
+        && (
+          isAdmin()
+          || profile().rol in ['gerente', 'Gerente', 'manager', 'Manager', 'administrador', 'Administrador', 'administradora', 'Administradora']
+          || profile().role in ['gerente', 'Gerente', 'manager', 'Manager', 'administrador', 'Administrador', 'administradora', 'Administradora']
+          || profile().tipoUsuario in ['gerente', 'Gerente', 'manager', 'Manager', 'administrador', 'Administrador', 'administradora', 'Administradora']
         );
     }
 
@@ -27,7 +38,8 @@ service cloud.firestore {
 
     match /horarios/{document=**} {
       allow read: if signedIn();
-      allow create, update, delete: if isAdmin();
+      allow create, update: if canManagePayroll();
+      allow delete: if isAdmin();
     }
 
     match /{document=**} {

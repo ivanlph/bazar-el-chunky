@@ -102,7 +102,11 @@ export default function Dashboard() {
     });
 
     const unsubGastos = onSnapshot(collection(db, 'gastosDiarios'), (snap) => {
-      setGastos(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
+      setGastos(
+        snap.docs
+          .map((d) => ({ id: d.id, ...d.data() }))
+          .filter((gasto) => gasto.tipo !== 'nomina')
+      );
     });
 
     const unsubApartados = onSnapshot(collection(db, 'apartados'), (snap) => {
