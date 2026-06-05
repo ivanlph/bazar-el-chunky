@@ -109,6 +109,8 @@ const initialForm = {
   (sum, item) => sum + Number(item || 0),
   0
 );
+const tipoCambio = Number(form.tipoCambio || 0);
+const totalUsd = tipoCambio > 0 ? totalImportes / tipoCambio : 0;
 
 const agregarImporte = () => {
   const numero = Number(form.importeActual);
@@ -237,6 +239,34 @@ const save = async () => {
 <Typography sx={{ fontWeight: 800, color: 'success.main', fontSize: 20 }}>
   Total: ${Number(totalImportes || 0).toFixed(2)} MXN
 </Typography>
+<Box
+  sx={{
+    p: 1.5,
+    borderRadius: 2,
+    bgcolor: '#eaf2ff',
+    border: '1px solid',
+    borderColor: 'primary.light',
+  }}
+>
+  <Typography fontWeight={800} color="primary.main">
+    En dólares: ${totalUsd.toFixed(2)} USD
+  </Typography>
+  <Typography color="text.secondary" fontSize={13}>
+    Tipo de cambio: ${Number(tipoCambio || 0).toFixed(2)} MXN por USD
+  </Typography>
+</Box>
+<TextField
+  label="Tipo de cambio"
+  type="number"
+  value={form.tipoCambio}
+  onChange={(e) =>
+    setForm({
+      ...form,
+      tipoCambio: e.target.value,
+    })
+  }
+  fullWidth
+/>
 <Typography fontWeight={700}>
   Método de pago
 </Typography>
@@ -314,18 +344,6 @@ const save = async () => {
       fullWidth
     />
 
-    <TextField
-      label="Tipo de cambio"
-      type="number"
-      value={form.tipoCambio}
-      onChange={(e) =>
-        setForm({
-          ...form,
-          tipoCambio: e.target.value,
-        })
-      }
-      fullWidth
-    />
     <TextField
   label="Recibido MXN adicional"
   type="number"
