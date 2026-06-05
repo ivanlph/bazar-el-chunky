@@ -13,6 +13,8 @@ import {
   TextField, 
   Typography,
   Box, 
+  useMediaQuery,
+  useTheme,
 } from '@mui/material';
 
 const categorias = ['Muebles', 'Ropa', 'Chacharas', 'Herramienta', 'Electronicos', 'Otros'];
@@ -89,6 +91,8 @@ if (metodo === 'dolares') {
   };
 }
 export default function VentaDialog({ open, onClose, onSave }) {
+const theme = useTheme();
+const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 const initialForm = {
   descripcion: '',
   categorias: [],
@@ -169,7 +173,7 @@ const save = async () => {
   setForm(initialForm);
   onClose();
 };
-  return <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
+  return <Dialog open={open} onClose={onClose} fullScreen={isMobile} fullWidth maxWidth="sm">
     <DialogTitle>Agregar venta</DialogTitle>
     <DialogContent sx={{ display:'grid', gap:2, pt:1 }}>
       <TextField label="Descripción pequeña" value={form.descripcion} onChange={e=>setForm({...form, descripcion:e.target.value})} fullWidth />
@@ -250,6 +254,13 @@ const save = async () => {
     });
   }}
   fullWidth
+  sx={{
+    flexWrap: { xs: 'wrap', sm: 'nowrap' },
+    '& .MuiToggleButton-root': {
+      flex: { xs: '1 1 50%', sm: '1 1 0' },
+      whiteSpace: 'nowrap',
+    },
+  }}
 >
   <ToggleButton value="efectivo">
     Efectivo

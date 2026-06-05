@@ -12,6 +12,8 @@ import {
   Stack,
   TextField,
   Typography,
+  useMediaQuery,
+  useTheme,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import { Link } from 'react-router-dom';
@@ -34,6 +36,8 @@ const initialForm = {
 };
 
 export default function Cargas() {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [cargas, setCargas] = useState([]);
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState(initialForm);
@@ -85,14 +89,14 @@ export default function Cargas() {
                 to={`/cargas/${c.id}`}
                 sx={{
                   p: 2,
-                  borderRadius: 4,
+                  borderRadius: 2,
                   display: 'block',
                   textDecoration: 'none',
                   color: 'inherit',
                 }}
               >
-                <Typography fontWeight={700}>{c.folio}</Typography>
-                <Typography color="text.secondary">{c.descripcion}</Typography>
+                <Typography fontWeight={700} noWrap>{c.folio}</Typography>
+                <Typography color="text.secondary" sx={{ overflowWrap: 'anywhere' }}>{c.descripcion}</Typography>
                 <Typography color="text.secondary">{c.fecha}</Typography>
 
                 <Typography sx={{ mt: 1 }}>
@@ -111,12 +115,12 @@ export default function Cargas() {
       <Fab
         color="primary"
         onClick={() => setOpen(true)}
-        sx={{ position: 'fixed', right: 24, bottom: 24 }}
+        sx={{ position: 'fixed', right: { xs: 16, sm: 24 }, bottom: { xs: 16, sm: 24 } }}
       >
         <AddIcon />
       </Fab>
 
-      <Dialog open={open} onClose={() => setOpen(false)} fullWidth maxWidth="sm">
+      <Dialog open={open} onClose={() => setOpen(false)} fullScreen={isMobile} fullWidth maxWidth="sm">
         <DialogTitle>Nueva carga</DialogTitle>
 
         <DialogContent>
@@ -163,3 +167,4 @@ export default function Cargas() {
     </Box>
   );
 }
+

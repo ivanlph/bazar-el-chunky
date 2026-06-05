@@ -12,6 +12,8 @@ import {
   Stack,
   TextField,
   Typography,
+  useMediaQuery,
+  useTheme,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import { useParams } from 'react-router-dom';
@@ -45,6 +47,8 @@ const moneyMXN = (value) =>
   }).format(Number(value || 0));
 
 export default function CargaDetalle() {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const { id } = useParams();
   const [carga, setCarga] = useState(null);
   const [compras, setCompras] = useState([]);
@@ -129,7 +133,7 @@ export default function CargaDetalle() {
 
 {carga.tamano && (
   <Typography variant="body2">
-    Tamaño: {c.tamano}
+    Tamaño: {carga.tamano}
   </Typography>
 )}
 
@@ -150,7 +154,7 @@ export default function CargaDetalle() {
 
       <Grid container spacing={2} mb={2}>
         <Grid item xs={12} md={4}>
-          <Card sx={{ p: 2, borderRadius: 4 }}>
+          <Card sx={{ p: 2, borderRadius: 2 }}>
             <Typography color="text.secondary">Compras</Typography>
             <Typography variant="h5" fontWeight={700}>
             {moneyUSD(totales.comprasUsd)}
@@ -159,7 +163,7 @@ export default function CargaDetalle() {
         </Grid>
 
         <Grid item xs={12} md={4}>
-          <Card sx={{ p: 2, borderRadius: 4 }}>
+          <Card sx={{ p: 2, borderRadius: 2 }}>
             <Typography color="text.secondary">Gastos USA</Typography>
             <Typography variant="h5" fontWeight={700}>
             {moneyUSD(totales.gastosUsd)}
@@ -168,7 +172,7 @@ export default function CargaDetalle() {
         </Grid>
 
         <Grid item xs={12} md={4}>
-          <Card sx={{ p: 2, borderRadius: 4 }}>
+          <Card sx={{ p: 2, borderRadius: 2 }}>
             <Typography color="text.secondary">Gastos México</Typography>
             <Typography variant="h5" fontWeight={700}>
             {moneyMXN(totales.gastosMxn)}
@@ -179,7 +183,7 @@ export default function CargaDetalle() {
           <Card
           sx={{
             p: 2,
-            borderRadius: 5,
+            borderRadius: 2,
             bgcolor: '#e8f5e9',
           }}
         >
@@ -194,7 +198,7 @@ export default function CargaDetalle() {
         {moneyMXN(totales.gastosMxn)}
       </Typography>
     </Card>
-      <Card sx={{ p: 2, borderRadius: 4, mb: 2 }}>
+      <Card sx={{ p: 2, borderRadius: 2, mb: 2 }}>
         <Typography variant="h6" fontWeight={700} mb={1}>
           Gastos del viaje
         </Typography>
@@ -222,7 +226,7 @@ export default function CargaDetalle() {
       <Grid container spacing={2}>
         {compras.map((c) => (
           <Grid item xs={12} md={6} key={c.id}>
-            <Card sx={{ p: 2, borderRadius: 4 }}>
+            <Card sx={{ p: 2, borderRadius: 2 }}>
               <Typography fontWeight={700}>{c.descripcion}</Typography>
               <Typography color="text.secondary">{c.compania}</Typography>
               <Typography>${Number(c.costoSubastaUsd || 0).toFixed(2)} USD</Typography>
@@ -240,12 +244,12 @@ export default function CargaDetalle() {
       <Fab
         color="primary"
         onClick={() => setOpen(true)}
-        sx={{ position: 'fixed', right: 24, bottom: 24 }}
+        sx={{ position: 'fixed', right: { xs: 16, sm: 24 }, bottom: { xs: 16, sm: 24 } }}
       >
         <AddIcon />
       </Fab>
 
-      <Dialog open={open} onClose={() => setOpen(false)} fullWidth maxWidth="sm">
+      <Dialog open={open} onClose={() => setOpen(false)} fullScreen={isMobile} fullWidth maxWidth="sm">
         <DialogTitle>Agregar compra</DialogTitle>
 
         <DialogContent>
@@ -302,3 +306,4 @@ export default function CargaDetalle() {
     </Box>
   );
 }
+

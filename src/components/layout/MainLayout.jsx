@@ -11,6 +11,7 @@ import {
   Toolbar,
   Typography,
   useMediaQuery,
+  useTheme,
 } from '@mui/material';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import PointOfSaleIcon from '@mui/icons-material/PointOfSale';
@@ -45,7 +46,8 @@ const menu = [
 
 export default function MainLayout({ children }) {
   const { pathname } = useLocation();
-  const isMobile = useMediaQuery('(max-width:768px)');
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const drawerContent = (
@@ -59,7 +61,7 @@ export default function MainLayout({ children }) {
             to={path}
             selected={pathname === path}
             onClick={() => isMobile && setMobileOpen(false)}
-            sx={{ borderRadius: 3, mb: 0.5 }}
+            sx={{ borderRadius: 2, mb: 0.5 }}
           >
             <ListItemIcon>{icon}</ListItemIcon>
             <ListItemText primary={text} />
@@ -70,7 +72,7 @@ export default function MainLayout({ children }) {
           onClick={() => {
             window.location.href = '/login';
           }}
-          sx={{ borderRadius: 3, mt: 2 }}
+          sx={{ borderRadius: 2, mt: 2 }}
         >
           <ListItemIcon>
             <LogoutIcon />
@@ -82,8 +84,15 @@ export default function MainLayout({ children }) {
   );
 
   return (
-    <Box sx={{ display: 'flex' }}>
-      <AppBar position="fixed" sx={{ zIndex: 1201 }}>
+    <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: 'background.default' }}>
+      <AppBar
+        position="fixed"
+        sx={{
+          zIndex: 1201,
+          width: { md: `calc(100% - ${drawerWidth}px)` },
+          ml: { md: `${drawerWidth}px` },
+        }}
+      >
         <Toolbar>
           {isMobile && (
             <IconButton
@@ -123,9 +132,9 @@ export default function MainLayout({ children }) {
         component="main"
         sx={{
           flexGrow: 1,
-          width: isMobile ? '100%' : `calc(100% - ${drawerWidth}px)`,
-          ml: isMobile ? 0 : `${drawerWidth}px`,
-          p: isMobile ? 1.5 : 3,
+          minWidth: 0,
+          width: '100%',
+          p: { xs: 1.5, sm: 2, md: 3 },
         }}
       >
         <Toolbar />
@@ -134,3 +143,4 @@ export default function MainLayout({ children }) {
     </Box>
   );
 }
+

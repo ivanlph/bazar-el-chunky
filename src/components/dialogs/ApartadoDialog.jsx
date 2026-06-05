@@ -1,13 +1,15 @@
 import { useState } from 'react';
-import { Alert, Button, Dialog, DialogActions, DialogContent, DialogTitle, IconButton, MenuItem, TextField } from '@mui/material';
+import { Alert, Button, Dialog, DialogActions, DialogContent, DialogTitle, IconButton, MenuItem, TextField, useMediaQuery, useTheme } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import dayjs from 'dayjs';
 
 export default function ApartadoDialog({ open, onClose, clientes, onAddCliente, onSave }) {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [nuevoCliente, setNuevoCliente] = useState(false);
   const [form, setForm] = useState({ clienteId:'', nombreCliente:'', telefono:'', descripcion:'', total:'', abonoInicial:'', fechaLimite: dayjs().add(30,'day').format('YYYY-MM-DD') });
   const save = async () => { await onSave(form); setForm({ clienteId:'', nombreCliente:'', telefono:'', descripcion:'', total:'', abonoInicial:'', fechaLimite: dayjs().add(30,'day').format('YYYY-MM-DD') }); setNuevoCliente(false); onClose(); };
-  return <Dialog open={open} onClose={onClose} fullWidth><DialogTitle>Nuevo apartado</DialogTitle>
+  return <Dialog open={open} onClose={onClose} fullScreen={isMobile} fullWidth maxWidth="sm"><DialogTitle>Nuevo apartado</DialogTitle>
     <DialogContent sx={{ display:'grid', gap:2, pt:1 }}>
     {!nuevoCliente ? (
   <>

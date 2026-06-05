@@ -1,2 +1,22 @@
-body { margin: 0; background: #f6f8fc; }
-.money { font-weight: 800; }
+html {
+  box-sizing: border-box;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: inherit;
+}
+
+body {
+  margin: 0;
+  background: #f6f8fc;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+.money {
+  font-weight: 800;
+}

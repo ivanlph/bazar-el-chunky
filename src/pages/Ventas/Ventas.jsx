@@ -5,6 +5,7 @@ import EditIcon from '@mui/icons-material/Edit';
 import VentaDialog from '../../components/dialogs/VentaDialog.jsx';
 import ApartadoDialog from '../../components/dialogs/ApartadoDialog.jsx';
 import AbonoDialog from '../../components/dialogs/AbonoDialog.jsx';
+import ResponsiveTable from '../../components/ResponsiveTable.jsx';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import { agregarVenta, listenVentasDelDia } from '../../services/ventas/ventasService.js';
 import { agregarCliente, listenClientes } from '../../services/clientes/clientesService.js';
@@ -96,7 +97,7 @@ const saveVenta = (data) =>
   key={v.id}
   sx={{
     p: 2,
-    borderRadius: 1.5,
+    borderRadius: 2,
     boxShadow: 2,
   }}
 >
@@ -117,7 +118,7 @@ const saveVenta = (data) =>
           display: 'inline-block',
           px: 1,
           py: 0.25,
-          borderRadius: 1.5,
+          borderRadius: 2,
           bgcolor: '#eaf2ff',
           color: 'primary.main',
           fontWeight: 700,
@@ -154,7 +155,7 @@ const saveVenta = (data) =>
     ))}
 
     {!ventas.length && (
-      <Card sx={{ p: 2, borderRadius: 1.5 }}>
+      <Card sx={{ p: 2, borderRadius: 2 }}>
         <Typography color="text.secondary">
           Todavía no hay ventas registradas hoy.
         </Typography>
@@ -162,7 +163,7 @@ const saveVenta = (data) =>
     )}
   </Stack>
 ) : (
-  <Card>
+  <ResponsiveTable minWidth={780}>
     <Table>
       <TableHead>
         <TableRow>
@@ -204,14 +205,14 @@ const saveVenta = (data) =>
         )}
       </TableBody>
     </Table>
-  </Card>
+  </ResponsiveTable>
 )}
-    <Fab color="primary" sx={{ position:'fixed', right:32, bottom:32 }} onClick={e=>setAnchor(e.currentTarget)}><AddIcon /></Fab>
+    <Fab color="primary" sx={{ position:'fixed', right:{ xs:16, sm:24, md:32 }, bottom:{ xs:16, sm:24, md:32 } }} onClick={e=>setAnchor(e.currentTarget)}><AddIcon /></Fab>
     <Menu anchorEl={anchor} open={Boolean(anchor)} onClose={()=>setAnchor(null)}><MenuItem onClick={()=>{setDialog('venta');setAnchor(null)}}>Venta</MenuItem><MenuItem onClick={()=>{setDialog('abono');setAnchor(null)}}>Abono</MenuItem><MenuItem onClick={()=>{setDialog('apartado');setAnchor(null)}}>Apartado</MenuItem></Menu>
     <VentaDialog open={dialog==='venta'} onClose={()=>setDialog(null)} onSave={saveVenta} />
     <AbonoDialog open={dialog==='abono'} onClose={()=>setDialog(null)} clientes={clientes} onSave={saveAbono} />
     <ApartadoDialog open={dialog==='apartado'}  onClose={()=>setDialog(null)} clientes={clientes}  onSave={saveApartado} />
-    <Dialog open={dialog === 'corte'} onClose={() => setDialog(null)} fullWidth maxWidth="sm">
+    <Dialog open={dialog === 'corte'} onClose={() => setDialog(null)} fullScreen={isMobile} fullWidth maxWidth="sm">
   <DialogTitle>Generar Corte del Día</DialogTitle>
 
   <DialogContent>
@@ -239,3 +240,4 @@ const saveVenta = (data) =>
 </Dialog>
   </Box>);
 }
+
