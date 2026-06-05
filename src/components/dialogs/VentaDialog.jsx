@@ -3,21 +3,19 @@ import {
   ToggleButton, 
   ToggleButtonGroup, 
   Alert,Button, 
-  Checkbox, 
   Dialog, 
   DialogActions, 
   DialogContent, 
   DialogTitle, 
-  FormControlLabel, 
-  FormGroup, 
   TextField, 
   Typography,
   Box, 
   useMediaQuery,
   useTheme,
 } from '@mui/material';
+import CheckIcon from '@mui/icons-material/Check';
+import { categoriasVenta } from '../../utils/categorias.js';
 
-const categorias = ['Muebles', 'Ropa', 'Chacharas', 'Herramienta', 'Electronicos', 'Otros'];
 function calcularTotal(valor) {
   const texto = String(valor || '').trim();
 
@@ -180,7 +178,61 @@ const save = async () => {
     <DialogContent sx={{ display:'grid', gap:2, pt:1 }}>
       <TextField label="Descripción pequeña" value={form.descripcion} onChange={e=>setForm({...form, descripcion:e.target.value})} fullWidth />
       <Typography variant="subtitle2">Categorías</Typography>
-      <FormGroup>{categorias.map(c => <FormControlLabel key={c} control={<Checkbox checked={form.categorias.includes(c)} onChange={()=>toggleCat(c)} />} label={c} />)}</FormGroup>
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: { xs: 'repeat(3, minmax(0, 1fr))', sm: 'repeat(4, minmax(0, 1fr))' },
+          gap: 1,
+        }}
+      >
+        {categoriasVenta.map(({ id, label, Icon }) => {
+          const selected = form.categorias.includes(id);
+
+          return (
+            <Button
+              key={id}
+              variant={selected ? 'contained' : 'outlined'}
+              color={selected ? 'primary' : 'inherit'}
+              onClick={() => toggleCat(id)}
+              sx={{
+                minWidth: 0,
+                minHeight: 78,
+                px: 0.75,
+                py: 1,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 0.5,
+                lineHeight: 1.1,
+                position: 'relative',
+                textTransform: 'none',
+                borderColor: selected ? 'primary.main' : 'divider',
+                bgcolor: selected ? 'primary.main' : '#f7f9fe',
+              }}
+            >
+              {selected && (
+                <CheckIcon
+                  sx={{
+                    position: 'absolute',
+                    top: 4,
+                    right: 4,
+                    fontSize: 16,
+                  }}
+                />
+              )}
+              <Icon fontSize="small" />
+              <Typography
+                component="span"
+                fontSize={11}
+                fontWeight={700}
+                textAlign="center"
+                sx={{ overflowWrap: 'anywhere' }}
+              >
+                {label}
+              </Typography>
+            </Button>
+          );
+        })}
+      </Box>
 
 <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
   <TextField
