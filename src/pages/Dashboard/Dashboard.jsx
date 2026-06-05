@@ -280,7 +280,7 @@ export default function Dashboard() {
         <ToggleButton value="anio">Año</ToggleButton>
       </ToggleButtonGroup>
 
-      <Card sx={{ p: 3, borderRadius: 4, mb: 3 }}>
+      <Card sx={{ p: 3, borderRadius: 2, mb: 3 }}>
         <Typography color="text.secondary" fontSize={14}>
           Meta de venta
         </Typography>
@@ -303,7 +303,7 @@ export default function Dashboard() {
           sx={{
             mt: 2,
             height: 12,
-            borderRadius: 10,
+            borderRadius: 2,
           }}
         />
       </Card>
@@ -311,7 +311,7 @@ export default function Dashboard() {
       <Grid container spacing={2}>
         {tarjetas.map((t) => (
           <Grid item xs={12} sm={6} md={3} key={t.titulo}>
-            <Card sx={{ p: 2, borderRadius: 4 }}>
+            <Card sx={{ p: 2, borderRadius: 2 }}>
               <Typography color="text.secondary" fontSize={14}>
                 {t.titulo}
               </Typography>
@@ -324,7 +324,7 @@ export default function Dashboard() {
         ))}
       </Grid>
 
-      <Card sx={{ p: 2, borderRadius: 4, mt: 3 }}>
+      <Card sx={{ p: 2, borderRadius: 2, mt: 3 }}>
         <Typography variant="h6" fontWeight={700} mb={1}>
           Apartados por vencer
         </Typography>
@@ -351,3 +351,4 @@ export default function Dashboard() {
     </Box>
   );
 }
+

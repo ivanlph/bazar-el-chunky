@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { onAuthStateChanged, signInWithEmailAndPassword, signOut } from 'firebase/auth';
-import { doc, getDoc } from 'firebase/firestore';
+import { collection, doc, getDoc, getDocs, limit, query, where } from 'firebase/firestore';
 import { auth, db } from '../services/firebase/firebase.js';
 
 const AuthContext = createContext(null);
@@ -16,7 +16,18 @@ export function AuthProvider({ children }) {
 
       if (firebaseUser) {
         const snap = await getDoc(doc(db, 'users', firebaseUser.uid));
-        setPerfil(snap.exists() ? snap.data() : null);
+
+        if (snap.exists()) {
+          setPerfil(snap.data());
+        } else {
+          const byEmail = query(
+            collection(db, 'users'),
+            where('email', '==', firebaseUser.email),
+            limit(1)
+          );
+          const emailSnap = await getDocs(byEmail);
+          setPerfil(emailSnap.empty ? null : emailSnap.docs[0].data());
+        }
       } else {
         setPerfil(null);
       }
