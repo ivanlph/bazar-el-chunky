@@ -27,6 +27,7 @@ import PersonIcon from '@mui/icons-material/Person';
 import MenuIcon from '@mui/icons-material/Menu';
 import LogoutIcon from '@mui/icons-material/Logout';
 import { Link, useLocation } from 'react-router-dom';
+import { useUser } from '../../contexts/UserContext.jsx';
 
 const drawerWidth = 260;
 
@@ -38,7 +39,7 @@ const menu = [
   ['Clientes', '/clientes', <PersonIcon />],
   ['Cargas', '/cargas', <LocalShippingIcon />],
   ['Nóminas', '/nominas', <GroupsIcon />],
-  ['Cortes', '/cortes', <PaymentsIcon />],
+  ['Cortes', '/cortes', <PaymentsIcon />, 'admin'],
   ['Inventario Pasivo', '/inventario', <InventoryIcon />],
   ['Reportes', '/reportes', <AssessmentIcon />],
   ['Configuración', '/configuracion', <SettingsIcon />],
@@ -48,13 +49,15 @@ export default function MainLayout({ children }) {
   const { pathname } = useLocation();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const { isAdmin } = useUser();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const visibleMenu = menu.filter(([, , , role]) => !role || isAdmin);
 
   const drawerContent = (
     <>
       <Toolbar />
       <List sx={{ p: 1 }}>
-        {menu.map(([text, path, icon]) => (
+        {visibleMenu.map(([text, path, icon]) => (
           <ListItemButton
             key={path}
             component={Link}

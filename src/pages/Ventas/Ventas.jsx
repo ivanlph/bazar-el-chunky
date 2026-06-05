@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import {Dialog, Box, Button, Card, CardContent, Fab, Menu, MenuItem, Stack, Table, TableBody, TableCell, TableHead, TableRow, Typography, DialogTitle, DialogContent, DialogActions,TextField,} from '@mui/material';
+import { Box, Button, Card, CardContent, Fab, Menu, MenuItem, Stack, Table, TableBody, TableCell, TableHead, TableRow, Typography } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
 import VentaDialog from '../../components/dialogs/VentaDialog.jsx';
@@ -12,9 +12,11 @@ import { agregarCliente, listenClientes } from '../../services/clientes/clientes
 import { crearApartado, registrarAbono } from '../../services/apartados/apartadosService.js';
 import { formatMoney, nowTime, todayKey } from '../../utils/date.js';
 import { useUser } from '../../contexts/UserContext.jsx';
+import { useNavigate } from 'react-router-dom';
 
 export default function Ventas() {
   const isMobile = useMediaQuery('(max-width:768px)');
+  const navigate = useNavigate();
   const [fecha, setFecha] = useState(todayKey());
   const { user, isSuperUser } = useUser();
   const [ventas, setVentas] = useState([]);
@@ -75,7 +77,7 @@ const saveVenta = (data) =>
       <Button 
         variant="contained" 
         color="success" 
-        onClick={() => setDialog('corte')}
+        onClick={() => navigate('/cortes')}
         sx={{ alignSelf: { xs: 'flex-start', sm: 'center' } }}
         >
 
@@ -212,32 +214,6 @@ const saveVenta = (data) =>
     <VentaDialog open={dialog==='venta'} onClose={()=>setDialog(null)} onSave={saveVenta} />
     <AbonoDialog open={dialog==='abono'} onClose={()=>setDialog(null)} clientes={clientes} onSave={saveAbono} />
     <ApartadoDialog open={dialog==='apartado'}  onClose={()=>setDialog(null)} clientes={clientes}  onSave={saveApartado} />
-    <Dialog open={dialog === 'corte'} onClose={() => setDialog(null)} fullScreen={isMobile} fullWidth maxWidth="sm">
-  <DialogTitle>Generar Corte del Día</DialogTitle>
-
-  <DialogContent>
-    <Stack spacing={2} sx={{ mt: 1 }}>
-      <TextField label="Efectivo" type="number" fullWidth />
-      <TextField label="Depósitos" type="number" fullWidth />
-      <TextField label="Pagos con tarjeta" type="number" fullWidth />
-      <TextField label="Fondo / cantidad en caja" type="number" fullWidth />
-      <TextField label="Gastos diarios" type="number" fullWidth />
-    </Stack>
-  </DialogContent>
-
-  <DialogActions>
-    <Button onClick={() => setDialog(null)}>Cancelar</Button>
-    <Button
-      variant="contained"
-      onClick={() => {
-        alert('Corte generado. Después lo conectamos para guardar historial y cerrar el día.');
-        setDialog(null);
-      }}
-    >
-      Confirmar Corte
-    </Button>
-  </DialogActions>
-</Dialog>
   </Box>);
 }
 
