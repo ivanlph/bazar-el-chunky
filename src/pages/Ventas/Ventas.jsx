@@ -18,6 +18,7 @@ import {
 import useMediaQuery from '@mui/material/useMediaQuery';
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
+import PrintIcon from '@mui/icons-material/Print';
 import { useNavigate } from 'react-router-dom';
 import VentaDialog from '../../components/dialogs/VentaDialog.jsx';
 import ApartadoDialog from '../../components/dialogs/ApartadoDialog.jsx';
@@ -29,6 +30,7 @@ import { crearApartado, registrarAbono } from '../../services/apartados/apartado
 import { formatMoney, nowTime, todayKey } from '../../utils/date.js';
 import { useUser } from '../../contexts/UserContext.jsx';
 import { getCategoriaMeta, getCategoriasFromVenta } from '../../utils/categorias.js';
+import { printVentaNota } from '../../utils/printNotes.js';
 
 export default function Ventas() {
   const isMobile = useMediaQuery('(max-width:768px)');
@@ -48,15 +50,23 @@ export default function Ventas() {
     [ventas]
   );
 
+  const nombreCliente = (clienteId) => {
+    if (!clienteId) return 'Cliente mostrador';
+    const cliente = clientes.find((item) => item.id === clienteId);
+    return cliente?.nombre || 'Cliente mostrador';
+  };
+
   const base = {
     fecha,
     hora: nowTime(),
     usuarioId: user.uid,
+    usuarioNombre: user.nombre || user.email || '',
+    usuarioEmail: user.email || '',
     sucursalId: user.sucursalId,
   };
 
-  const saveVenta = (data) =>
-    agregarVenta({
+  const saveVenta = async (data) => {
+    const venta = await agregarVenta({
       ...base,
       tipo: 'venta',
       descripcion: data.descripcion,
@@ -72,10 +82,12 @@ export default function Ventas() {
       cambioMxn: Number(data.cambioMxn || 0),
       importes: data.importes || [],
     });
+    printVentaNota(venta, { cajeroNombre: user.nombre || user.email || '' });
+  };
 
   const saveAbono = async (data) => {
-    await registrarAbono({ ...data, ...base });
-    await agregarVenta({
+    const abono = await registrarAbono({ ...data, ...base });
+    const venta = await agregarVenta({
       ...base,
       tipo: 'abono',
       descripcion: 'Abono a apartado',
@@ -88,7 +100,9 @@ export default function Ventas() {
       equivalenteMxn: Number(data.equivalenteMxn || 0),
       apartadoId: data.apartadoId,
       clienteId: data.clienteId,
+      folio: abono?.folio,
     });
+    printVentaNota(venta, { clienteNombre: nombreCliente(data.clienteId), cajeroNombre: user.nombre || user.email || '' });
   };
 
   const saveApartado = async (form) => {
@@ -115,7 +129,7 @@ export default function Ventas() {
       usuarioId: user.uid,
     });
 
-    await agregarVenta({
+    const venta = await agregarVenta({
       ...base,
       tipo: 'apartado',
       descripcion: form.descripcion,
@@ -129,6 +143,7 @@ export default function Ventas() {
       apartadoId: apartado.id,
       clienteId,
     });
+    printVentaNota(venta, { clienteNombre: form.nombreCliente || nombreCliente(clienteId), cajeroNombre: user.nombre || user.email || '' });
   };
 
   return (
@@ -247,8 +262,29 @@ export default function Ventas() {
                       )}
 
                       {isSuperUser && (
-                        <Button size="small" variant="text" startIcon={<EditIcon />}>
-                          Editar
+                        <Stack direction="row" spacing={0.5}>
+                          <Button
+                            size="small"
+                            variant="text"
+                            startIcon={<PrintIcon />}
+                            onClick={() => printVentaNota(venta, { reprint: true, clienteNombre: nombreCliente(venta.clienteId), cajeroNombre: user.nombre || user.email || '' })}
+                          >
+                            Reimprimir
+                          </Button>
+                          <Button size="small" variant="text" startIcon={<EditIcon />}>
+                            Editar
+                          </Button>
+                        </Stack>
+                      )}
+
+                      {!isSuperUser && (
+                        <Button
+                          size="small"
+                          variant="text"
+                          startIcon={<PrintIcon />}
+                          onClick={() => printVentaNota(venta, { reprint: true, clienteNombre: nombreCliente(venta.clienteId), cajeroNombre: user.nombre || user.email || '' })}
+                        >
+                          Reimprimir
                         </Button>
                       )}
                     </Stack>
@@ -291,11 +327,21 @@ export default function Ventas() {
                   <TableCell>{venta.metodoPago || '-'}</TableCell>
                   <TableCell align="right">{formatMoney(venta.monto)}</TableCell>
                   <TableCell>
-                    {isSuperUser && (
-                      <Button size="small" variant="text" startIcon={<EditIcon />}>
-                        Editar
+                    <Stack direction="row" justifyContent="flex-end" spacing={1}>
+                      <Button
+                        size="small"
+                        variant="text"
+                        startIcon={<PrintIcon />}
+                        onClick={() => printVentaNota(venta, { reprint: true, clienteNombre: nombreCliente(venta.clienteId), cajeroNombre: user.nombre || user.email || '' })}
+                      >
+                        Reimprimir
                       </Button>
-                    )}
+                      {isSuperUser && (
+                        <Button size="small" variant="text" startIcon={<EditIcon />}>
+                          Editar
+                        </Button>
+                      )}
+                    </Stack>
                   </TableCell>
                 </TableRow>
               ))}

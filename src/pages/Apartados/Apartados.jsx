@@ -19,6 +19,7 @@ import {
   useTheme,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
+import PrintIcon from '@mui/icons-material/Print';
 import ResponsiveTable from '../../components/ResponsiveTable.jsx';
 import ApartadoDialog from '../../components/dialogs/ApartadoDialog.jsx';
 import AbonoDialog from '../../components/dialogs/AbonoDialog.jsx';
@@ -28,6 +29,7 @@ import { agregarVenta } from '../../services/ventas/ventasService.js';
 import { useUser } from '../../contexts/UserContext.jsx';
 import { nowTime, todayKey } from '../../utils/date.js';
 import { formatMoney } from '../../utils/money.js';
+import { printApartadoNota, printVentaNota } from '../../utils/printNotes.js';
 
 export default function Apartados() {
   const theme = useTheme();
@@ -51,8 +53,12 @@ export default function Apartados() {
     fecha: todayKey(),
     hora: nowTime(),
     usuarioId: user.uid,
+    usuarioNombre: user.nombre || user.email || '',
+    usuarioEmail: user.email || '',
     sucursalId: user.sucursalId,
   };
+
+  const clientePorId = (clienteId) => clientes.find((cliente) => cliente.id === clienteId);
 
   const registrarVentaApartado = (data) =>
     agregarVenta({
@@ -68,6 +74,7 @@ export default function Apartados() {
       equivalenteMxn: Number(data.equivalenteMxn || 0),
       apartadoId: data.apartadoId,
       clienteId: data.clienteId,
+      folio: data.folio,
     });
 
   const saveApartado = async (form) => {
@@ -82,11 +89,18 @@ export default function Apartados() {
       clienteId = doc.id;
     }
 
+    const clienteNota = clientePorId(clienteId) || {
+      id: clienteId,
+      nombre: form.nombreCliente,
+      telefono: form.telefono,
+    };
+
     const totalVenta = Number(form.total || 0);
     const abonado = Number(form.abonoInicial || 0);
     const saldo = Math.max(0, totalVenta - abonado);
     const apartado = await crearApartado({
       clienteId,
+      fecha: base.fecha,
       descripcion: form.descripcion,
       total: totalVenta,
       abonado,
@@ -96,9 +110,10 @@ export default function Apartados() {
       sucursalId: user.sucursalId,
       usuarioId: user.uid,
     });
+    printApartadoNota(apartado, { cliente: clienteNota });
 
     if (abonado > 0) {
-      await registrarVentaApartado({
+      const venta = await registrarVentaApartado({
         tipo: 'apartado',
         descripcion: form.descripcion,
         monto: abonado,
@@ -109,13 +124,14 @@ export default function Apartados() {
         apartadoId: apartado.id,
         clienteId,
       });
+      printVentaNota(venta, { clienteNombre: clienteNota?.nombre || 'Cliente mostrador', cajeroNombre: user.nombre || user.email || '' });
     }
   };
 
   const saveAbono = async (data) => {
     const apartado = items.find((item) => item.id === data.apartadoId);
-    await registrarAbono({ ...data, ...base });
-    await registrarVentaApartado({
+    const abono = await registrarAbono({ ...data, ...base });
+    const venta = await registrarVentaApartado({
       tipo: 'abono',
       descripcion: apartado?.descripcion || 'Abono a apartado',
       monto: data.cantidad,
@@ -125,7 +141,9 @@ export default function Apartados() {
       equivalenteMxn: data.equivalenteMxn,
       apartadoId: data.apartadoId,
       clienteId: data.clienteId,
+      folio: abono?.folio,
     });
+    printVentaNota(venta, { clienteNombre: nombreCliente(data.clienteId), cajeroNombre: user.nombre || user.email || '' });
     setAbonoInicial(null);
   };
 
@@ -211,6 +229,16 @@ export default function Apartados() {
                     </Button>
                   </Stack>
                 )}
+                <Button
+                  fullWidth
+                  size="small"
+                  variant="text"
+                  startIcon={<PrintIcon />}
+                  onClick={() => printApartadoNota(a, { cliente: clientePorId(a.clienteId), reprint: true })}
+                  sx={{ mt: 1 }}
+                >
+                  Reimprimir nota
+                </Button>
               </CardContent>
             </Card>
           ))}
@@ -248,16 +276,26 @@ export default function Apartados() {
                   <TableCell>{a.fechaLimite}</TableCell>
                   <TableCell>{a.estatus}</TableCell>
                   <TableCell align="right">
-                    {a.estatus !== 'liquidado' && Number(a.saldo || 0) > 0 && (
-                      <Stack direction="row" justifyContent="flex-end" spacing={1}>
+                    <Stack direction="row" justifyContent="flex-end" spacing={1}>
+                      <Button
+                        size="small"
+                        variant="text"
+                        startIcon={<PrintIcon />}
+                        onClick={() => printApartadoNota(a, { cliente: clientePorId(a.clienteId), reprint: true })}
+                      >
+                        Reimprimir
+                      </Button>
+                      {a.estatus !== 'liquidado' && Number(a.saldo || 0) > 0 && (
+                        <>
                         <Button size="small" variant="outlined" onClick={() => openAbono(a)}>
                           Abonar
                         </Button>
                         <Button size="small" variant="contained" color="success" onClick={() => openAbono(a, true)}>
                           Liquidar
                         </Button>
-                      </Stack>
-                    )}
+                        </>
+                      )}
+                    </Stack>
                   </TableCell>
                 </TableRow>
               ))}
