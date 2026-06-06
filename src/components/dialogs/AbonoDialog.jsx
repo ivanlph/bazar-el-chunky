@@ -25,7 +25,15 @@ const fieldSx = {
   },
 };
 
-export default function AbonoDialog({ open, onClose, clientes, onSave }) {
+export default function AbonoDialog({
+  open,
+  onClose,
+  clientes,
+  onSave,
+  initialClienteId = '',
+  initialApartadoId = '',
+  initialCantidad = '',
+}) {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [clienteId, setClienteId] = useState('');
@@ -35,6 +43,13 @@ export default function AbonoDialog({ open, onClose, clientes, onSave }) {
   const [metodoPago, setMetodoPago] = useState('efectivo');
   const [recibidoUsd, setRecibidoUsd] = useState('');
   const [tipoCambio, setTipoCambio] = useState('17');
+
+  useEffect(() => {
+    if (!open) return;
+    setClienteId(initialClienteId || '');
+    setApartadoId(initialApartadoId || '');
+    setCantidad(initialCantidad ? String(initialCantidad) : '');
+  }, [initialApartadoId, initialCantidad, initialClienteId, open]);
 
   useEffect(() => {
     if (!clienteId) return undefined;
